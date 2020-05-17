@@ -1,10 +1,10 @@
 if  [ -f tmp_for_shell_tasks_private ]; then
 rm -rf tmp_for_shell_tasks_private
-echo 'Dir tmp_for_shell_tasks_private has been deleted!'
+echo 'Dir "tmp_for_shell_tasks_private" has been deleted!'
 fi
 
 mkdir tmp_for_shell_tasks_private
-echo Dir 'tmp_for_shell_tasks_private has been created!'
+echo 'Dir "tmp_for_shell_tasks_private" has been created!'
 
 cd tmp_for_shell_tasks_private
 pwd
@@ -18,4 +18,4 @@ dir | sed 's:jpg:png:g'
 
 cd ../
 rm -rf tmp_for_shell_tasks_private
-echo 'Dir tmp_for_shell_tasks_private has been deleted!'
+echo 'Dir "tmp_for_shell_tasks_private" has been deleted!'

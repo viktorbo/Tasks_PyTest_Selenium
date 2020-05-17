@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
-if  [ -f tmp_for_shell_tasks_private ]; then
-rm -rf tmp_for_shell_tasks_private
-echo 'Dir "tmp_for_shell_tasks_private" has been deleted!'
+
+tmp_for_shell_task_1=/tmp/tmp_for_shell_task_1
+
+if  [ -d $tmp_for_shell_task_1 ]; then
+rm -rf $tmp_for_shell_task_1
+echo Dir $tmp_for_shell_task_1 has been deleted!
 fi
 
-mkdir tmp_for_shell_tasks_private
-echo 'Dir "tmp_for_shell_tasks_private" has been created!'
+mkdir $tmp_for_shell_task_1
+echo Dir $tmp_for_shell_task_1 has been created!
 
-cd tmp_for_shell_tasks_private
+cd $tmp_for_shell_task_1
 pwd
+echo
 
 touch {01..50}.jpg
 echo '50 .jpg files have been created!'
 dir
+echo
 
 echo 'Replacing .jpg to .png'
 dir | sed 's:jpg:png:g'
+echo
 
-cd ../
-rm -rf tmp_for_shell_tasks_private
-echo 'Dir "tmp_for_shell_tasks_private" has been deleted!'
+cd -
+rm -rf $tmp_for_shell_task_1
+echo Dir $tmp_for_shell_task_1 has been deleted!

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 backup=/tmp/backup
 ref_path=/etc
 

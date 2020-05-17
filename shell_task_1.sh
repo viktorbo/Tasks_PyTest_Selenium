@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 if  [ -f tmp_for_shell_tasks_private ]; then
 rm -rf tmp_for_shell_tasks_private
 echo 'Dir "tmp_for_shell_tasks_private" has been deleted!'

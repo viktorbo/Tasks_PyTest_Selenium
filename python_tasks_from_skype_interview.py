@@ -5,13 +5,12 @@ strings = ["abc", "hello", "qwerty", "world", "123"]
 
 
 def find_string_with_max_length(strings):
-    max_len = max([len(string) for string in strings])
-    for indx, string in enumerate(strings):
-        if len(string) == max_len:
-            return strings[indx]
+    string_lens = [len(string) for string in strings]
+    return strings[string_lens.index(max(string_lens))]
 
 
 print(f"\nTask #1 answer: {find_string_with_max_length(strings)}")
+
 
 # Task 2
 # Здесь как и в первой задачке решил избавиться от лишних проверок (так как в задаче это не требуется).

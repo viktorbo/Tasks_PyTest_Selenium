@@ -17,7 +17,7 @@ class Test_Site_with_Clothes:
         self.clickable_timeout = 10
 
     def setup_method(self):
-        print(f'Setup driver for test class.\n'
+        print(f'Setup driver...\n'
               f'Path to driver: {self.driver_path}')
         self.driver = webdriver.Firefox(executable_path=str(self.driver_path))
         self.action = webdriver.ActionChains(self.driver)
@@ -44,7 +44,7 @@ class Test_Site_with_Clothes:
         except:
             print("Driver was closed (with 'quit').")
 
-    def test_add_to_cart(self):
+    def test_Add_to_Cart(self):
         item_name = 'Blouse'
         self.driver.find_element_by_name('search_query').send_keys(item_name)
         self.driver.find_element_by_name('submit_search').click()
@@ -94,6 +94,8 @@ class Test_Site_with_Clothes:
 
         try:
             """
+            По-хорошему еще надо проверять сколько товаров было до этого в корзине и что после добавления одного товара 
+            в корзину добавляется только добавленный товар в правильном количестве, но я решил не отходить от пунктов в задаче.
             Также можно добавить проверку на соответствие stock-статуса в корзине для добавленного товара,
             но я не стал загромождать и излишне усложнять задание.
             """
@@ -105,3 +107,24 @@ class Test_Site_with_Clothes:
             print("Cart is empty.")
             raise AssertionError("FAILED")
 
+    def test_Check_Specials(self):
+        transition_sequence = ['Women', 'Specials']
+        seq_iterator = iter(transition_sequence)
+
+        #  GO TO 'WOMEN / SPECIALS'
+        try:
+            self.driver.find_element_by_xpath(f"//div[@id='block_top_menu']/ul[1]/li[1]/a[@title='{next(seq_iterator)}']").click()
+            self.driver.find_element_by_xpath(f"//div[@id='left_column']/div[@id='special_block_right']/p[@class='title_block']/a[@title='{next(seq_iterator)}']").click()
+        except NoSuchElementException:
+            raise AssertionError(f"Something went wrong when moving into {'/'.join(transition_sequence)}.")
+
+        #  SALE CHECKING
+        products_xpath = "//ul[@class='product_list grid row']/li"
+        number_of_products = len(self.driver.find_elements_by_xpath(products_xpath))
+        try:
+            products_with_sale = [self.driver.find_element_by_xpath(products_xpath+f"[{i+1}]/div[@class='product-container']/div[@class='right-block']/div[@class='content_price']/span[@class='price-percent-reduction']") for i in range(number_of_products)]
+            print("All products display with a discount.\n"
+                  "TEST PASSED")
+        except NoSuchElementException:
+            raise AssertionError(f"Something went wrong. Check {'/'.join(transition_sequence)} on web-site.\n"
+                                 f"*(Maybe one or more products are displayed without a discount.)")

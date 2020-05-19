@@ -31,14 +31,14 @@ class Test_Site_with_Clothes:
     def teardown_method(self):
         try:
             self.driver.quit()
-            print("Browser has been closed.")
+            print("Browser has been closed (with 'quit()').")
         except:
             raise AssertionError("Something went wrong.")
 
     def teardown_class(self):
         try:
             self.driver.quit()
-            print("Driver has been closed (with 'quit').")
+            print("Browser has been closed (with 'quit()').")
         except:
             pass
 

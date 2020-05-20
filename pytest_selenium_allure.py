@@ -6,41 +6,44 @@ from selenium.webdriver.support.ui import WebDriverWait as driver_wait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+import pytest
 
 
+@pytest.fixture(scope='class')
+def browser_env(request):
+    request.cls.resource_path = 'http://automationpractice.com'
+    request.cls.driver_path = Path(os.getcwd()) / ('geckodriver' + ('.exe' if 'win' in sys.platform else ''))
+    request.cls.clickable_timeout = 5
+    yield
+    try:
+        request.cls.driver.quit()
+        print("Browser has been closed (with 'quit()').")
+    except:
+        pass
+
+
+@pytest.fixture(scope='function')
+def browser_run(request):
+    print(f'Setup driver...\n'
+          f'Path to driver: {request.cls.driver_path}')
+    request.cls.driver = webdriver.Firefox(executable_path=str(request.cls.driver_path))
+    request.cls.action = webdriver.ActionChains(request.cls.driver)
+    print(f'Running driver...\n'
+          f'Site: {request.cls.resource_path}')
+    try:
+        request.cls.driver.get(request.cls.resource_path)
+    except:
+        raise AssertionError("Problems with driver.get(...)")
+    yield
+    try:
+        request.cls.driver.quit()
+        print("Browser has been closed (with 'quit()').")
+    except:
+        raise RuntimeError("Something went wrong when closing the browser!")
+
+
+@pytest.mark.usefixtures('browser_env', 'browser_run')
 class Test_Site_with_Clothes:
-    def setup_class(self):
-        self.resource_path = 'http://automationpractice.com'
-        self.driver_path = Path(os.getcwd()) / ('geckodriver' + ('.exe' if 'win' in sys.platform else ''))
-        self.clickable_timeout = 5
-
-    def setup_method(self):
-        print(f'Setup driver...\n'
-              f'Path to driver: {self.driver_path}')
-        self.driver = webdriver.Firefox(executable_path=str(self.driver_path))
-        self.action = webdriver.ActionChains(self.driver)
-
-    def setup(self):
-        print(f'Running driver...\n'
-              f'Site: {self.resource_path}')
-        try:
-            self.driver.get(self.resource_path)
-        except:
-            raise AssertionError("Problems with driver.get(...)")
-
-    def teardown_method(self):
-        try:
-            self.driver.quit()
-            print("Browser has been closed (with 'quit()').")
-        except:
-            raise AssertionError("Something went wrong.")
-
-    def teardown_class(self):
-        try:
-            self.driver.quit()
-            print("Browser has been closed (with 'quit()').")
-        except:
-            pass
 
     def test_Add_to_Cart(self):
         item_name = 'Blouse'
@@ -218,3 +221,4 @@ class Test_Site_with_Clothes:
 
         print("Product comparison works correctly. \n"
               "TEST PASSED")
+

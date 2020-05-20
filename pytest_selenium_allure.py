@@ -8,6 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import pytest
 
+from pages import MainPage, SearchResult, Cart
+
 def exit_browser(obj, original = False):
     try:
         obj.driver.quit()
@@ -44,71 +46,88 @@ def browser_run(request):
 @pytest.mark.usefixtures('browser_env', 'browser_run')
 class Test_Site_with_Clothes:
 
-    def wait_n_click_obj_xpath(self, obj_xpath, wait=True, wait_time=None, click=True):
+    def wait_n_click_obj_xpath(self, obj_xpath=None, obj_name=None, obj_cls_name=None, wait=True, wait_time=None, click=True):
         if wait:
             driver_wait(self.driver, wait_time if wait_time else self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, obj_xpath)))
+        obj = None
+        if obj_xpath:
+            obj = self.driver.find_element_by_xpath(obj_xpath)
+        elif obj_name:
+            obj = self.driver.find_element_by_name(obj_name)
+        elif obj_cls_name:
+            obj = self.driver.find_element_by_class_name(obj_cls_name)
         if click:
             try:
-                self.driver.find_element_by_xpath(obj_xpath).click()
+                obj.click()
             except NoSuchElementException:
-                raise  NoSuchElementException(f"Object {obj_xpath} not found.")
+                raise NoSuchElementException(f"Object {obj_xpath} not found.")
             except:
                 raise RuntimeError("Something went wrong.")
 
     def test_Add_to_Cart(self):
         item_name = 'Blouse'
-        self.driver.find_element_by_name('search_query').send_keys(item_name)
-        self.driver.find_element_by_name('submit_search').click()
 
-        #  SEARCH
-        try:
-            self.driver.implicitly_wait(self.clickable_timeout)
-            self.driver.find_element_by_xpath("//ul[@class='product_list grid row']/li[1]")
-            print(f"{item_name} has been found.")
-        except NoSuchElementException:
-            raise AssertionError(f"{item_name} not found.")
+        search_result = MainPage(self.driver, self.action).search(item_name)
+        search_result.check_search()
+        search_result.check_stock()
+        search_result.add_to_cart()
 
-        #  STOCK CHECKING
-        """
-        Проверяется только наличие элемента с надписью 'In stock' после поиска блузки.
-        Ожидается, что будет найдена одна блузка.
-        Товаров с подписью "не в наличии" на тестовом сайте я не обнаружил,
-        поэтому проверка реализована так.
-        """
-        try:
-            self.driver.find_element_by_class_name('available-now')
-            print(f'{item_name} in stock.')
-        except NoSuchElementException:
-            print(f'No items with name "{item_name}".')
-            raise AssertionError(f"Item {item_name} not in stock.")
+        cart = search_result.go_to_cart()
 
-        #  ADDING TO CART
-        self.action.move_to_element(self.driver.find_element_by_class_name('right-block')).perform()
+        assert cart.check_product_in_cart(item_name), "Cart is empty."
 
-        add_to_cart_button_xpath = "//div[@class='button-container']/a[@title='Add to cart']"
-        self.wait_n_click_obj_xpath(add_to_cart_button_xpath)
-
-        continue_shopping_button = "//div[@class='layer_cart_cart col-xs-12 col-md-6']/div[@class='button-container']/span[@title='Continue shopping']"
-        self.wait_n_click_obj_xpath(continue_shopping_button)
-
-        #  CART CHECKING
-        self.action.move_to_element(self.driver.find_element_by_xpath("//div[@class='shopping_cart']/a[1]")).perform()
-
-        checkout_button = "//p[@class='cart-buttons']/a[1]/span[1]"
-        self.wait_n_click_obj_xpath(checkout_button)
-
-        try:
-            """
-            По-хорошему еще надо проверять сколько товаров было до этого в корзине и что после добавления одного товара
-            в корзину добавляется только добавленный товар в правильном количестве, но я решил не отходить от пунктов в задаче.
-            Также можно добавить проверку на соответствие stock-статуса в корзине для добавленного товара,
-            но я не стал загромождать и излишне усложнять задание.
-            """
-            self.driver.find_element_by_xpath(
-                "//div[@id='order-detail-content']/table[@id='cart_summary']/tbody/tr[@id='product_2_7_0_0']")
-            print(f'{item_name} has been added to cart.')
-        except NoSuchElementException:
-            raise AssertionError("Cart is empty.")
+        # self.driver.find_element_by_name('search_query').send_keys(item_name)
+        # self.driver.find_element_by_name('submit_search').click()
+        #
+        # #  SEARCH
+        # try:
+        #     self.driver.implicitly_wait(self.clickable_timeout)
+        #     self.driver.find_element_by_xpath("//ul[@class='product_list grid row']/li[1]")
+        #     print(f"{item_name} has been found.")
+        # except NoSuchElementException:
+        #     raise AssertionError(f"{item_name} not found.")
+        #
+        # #  STOCK CHECKING
+        # """
+        # Проверяется только наличие элемента с надписью 'In stock' после поиска блузки.
+        # Ожидается, что будет найдена одна блузка.
+        # Товаров с подписью "не в наличии" на тестовом сайте я не обнаружил,
+        # поэтому проверка реализована так.
+        # """
+        # try:
+        #     self.driver.find_element_by_class_name('available-now')
+        #     print(f'{item_name} in stock.')
+        # except NoSuchElementException:
+        #     print(f'No items with name "{item_name}".')
+        #     raise AssertionError(f"Item {item_name} not in stock.")
+        #
+        # #  ADDING TO CART
+        # self.action.move_to_element(self.driver.find_element_by_class_name('right-block')).perform()
+        #
+        # add_to_cart_button_xpath = "//div[@class='button-container']/a[@title='Add to cart']"
+        # self.wait_n_click_obj_xpath(add_to_cart_button_xpath)
+        #
+        # continue_shopping_button = "//div[@class='layer_cart_cart col-xs-12 col-md-6']/div[@class='button-container']/span[@title='Continue shopping']"
+        # self.wait_n_click_obj_xpath(continue_shopping_button)
+        #
+        # #  CART CHECKING
+        # self.action.move_to_element(self.driver.find_element_by_xpath("//div[@class='shopping_cart']/a[1]")).perform()
+        #
+        # checkout_button = "//p[@class='cart-buttons']/a[1]/span[1]"
+        # self.wait_n_click_obj_xpath(checkout_button)
+        #
+        # try:
+        #     """
+        #     По-хорошему еще надо проверять сколько товаров было до этого в корзине и что после добавления одного товара
+        #     в корзину добавляется только добавленный товар в правильном количестве, но я решил не отходить от пунктов в задаче.
+        #     Также можно добавить проверку на соответствие stock-статуса в корзине для добавленного товара,
+        #     но я не стал загромождать и излишне усложнять задание.
+        #     """
+        #     self.driver.find_element_by_xpath(
+        #         "//div[@id='order-detail-content']/table[@id='cart_summary']/tbody/tr[@id='product_2_7_0_0']")
+        #     print(f'{item_name} has been added to cart.')
+        # except NoSuchElementException:
+        #     raise AssertionError("Cart is empty.")
 
     def test_Check_Specials(self):
         transition_sequence = ['Women', 'Specials']
@@ -116,8 +135,9 @@ class Test_Site_with_Clothes:
 
         #  GO TO 'WOMEN / SPECIALS'
         try:
-            self.driver.find_element_by_xpath(f"//div[@id='block_top_menu']/ul[1]/li[1]/a[@title='{next(seq_iterator)}']").click()
-            self.driver.find_element_by_xpath(f"//div[@id='left_column']/div[@id='special_block_right']/p[@class='title_block']/a[@title='{next(seq_iterator)}']").click()
+            print(f"Go to '{'/'.join(transition_sequence)}'")
+            self.wait_n_click_obj_xpath(f"//div[@id='block_top_menu']/ul[1]/li[1]/a[@title='{next(seq_iterator)}']", wait=False)
+            self.wait_n_click_obj_xpath(f"//div[@id='left_column']/div[@id='special_block_right']/p[@class='title_block']/a[@title='{next(seq_iterator)}']")
         except NoSuchElementException:
             raise AssertionError(f"Something went wrong when moving into {'/'.join(transition_sequence)}.")
 
@@ -221,4 +241,3 @@ class Test_Site_with_Clothes:
                 raise AssertionError("Expected and current products do not match.")
 
         print("Product comparison works correctly.")
-

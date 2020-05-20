@@ -2,9 +2,12 @@ from selenium.webdriver.support.ui import WebDriverWait as driver_wait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from utils import wait_n_click
 
 
 class BaseClass:
+    clickable_timeout = 5
+
     def __init__(self, driver, action):
         self.driver = driver
         self.action = action
@@ -16,25 +19,53 @@ class MainPage(BaseClass):
         self.driver.find_element_by_name('submit_search').click()
         return SearchResult(self.driver, self.action, search_request)
 
+    def go_to_women(self):
+        try:
+            print("Go to 'Women'")
+            wait_n_click(self, "//div[@id='block_top_menu']/ul[1]/li[1]/a[@title='Women']", wait=False)
+        except NoSuchElementException:
+            raise AssertionError("Something went wrong when moving into 'Women'.")
+        return Women(self.driver, self.action)
+
+
+class Women(BaseClass):
+    def go_to_specials(self):
+        try:
+            print("Go to 'Specials'")
+            wait_n_click(self, "//div[@id='left_column']/div[@id='special_block_right']/p[@class='title_block']/a[@title='Specials']")
+        except NoSuchElementException:
+            raise AssertionError("Something went wrong when moving into 'Specials'.")
+        return Specials(self.driver, self.action)
+
+
+class Specials(BaseClass):
+    def check_discounts(self):
+        products_xpath = "//ul[@class='product_list grid row']/li"
+        number_of_products = len(self.driver.find_elements_by_xpath(products_xpath))
+        try:
+            products_with_sale = [self.driver.find_element_by_xpath(
+                f"{products_xpath}[{i + 1}]/div[@class='product-container']/div[@class='right-block']/div[@class='content_price']/span[@class='price-percent-reduction']")
+                                  for i in range(number_of_products)]
+            print("All products display with a discount.")
+            return True
+        except NoSuchElementException:
+            return False
+
 
 class SearchResult(BaseClass):
-    clickable_timeout = 5
 
     def __init__(self, driver, action, search_request=None):
         super().__init__(driver, action)
         if search_request:
             self.search_request = search_request
 
-    def wait_n_click(self, xpath):
-        driver_wait(self.driver, self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-        self.driver.find_element_by_xpath(xpath).click()
-
     def check_search(self):
         try:
             self.driver.find_element_by_xpath("//ul[@class='product_list grid row']/li[1]")
             print(f"{self.search_request} has been found.")
+            return True
         except NoSuchElementException:
-            raise AssertionError(f"{self.search_request} not found.")
+            return False
 
     def check_stock(self):
         try:
@@ -42,7 +73,6 @@ class SearchResult(BaseClass):
             print(f'{self.search_request} in stock.')
             return True
         except NoSuchElementException:
-            print(f'No items with name "{self.search_request}".')
             return False
 
     def add_to_cart(self):
@@ -50,13 +80,13 @@ class SearchResult(BaseClass):
 
         try:
             add_to_cart_button_xpath = "//div[@class='button-container']/a[@title='Add to cart']"
-            self.wait_n_click(add_to_cart_button_xpath)
+            wait_n_click(self, add_to_cart_button_xpath)
         except:
             raise AssertionError("Problems with 'Add to cart' button.")
 
         try:
             continue_shopping_button = "//div[@class='layer_cart_cart col-xs-12 col-md-6']/div[@class='button-container']/span[@title='Continue shopping']"
-            self.wait_n_click(continue_shopping_button)
+            wait_n_click(self, continue_shopping_button)
         except:
             raise AssertionError("Problems with 'Continue shopping' button.")
 
@@ -64,7 +94,7 @@ class SearchResult(BaseClass):
         self.action.move_to_element(self.driver.find_element_by_xpath("//div[@class='shopping_cart']/a[1]")).perform()
 
         checkout_button = "//p[@class='cart-buttons']/a[1]/span[1]"
-        self.wait_n_click(checkout_button)
+        wait_n_click(self, checkout_button)
 
         return Cart(self.driver, self.action)
 

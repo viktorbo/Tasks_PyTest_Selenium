@@ -8,6 +8,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import pytest
 
+def exit_browser(obj, original = False):
+    try:
+        obj.driver.quit()
+    except:
+        if original:
+            raise RuntimeError("Something went wrong when closing the browser!")
+        pass
 
 @pytest.fixture(scope='class')
 def browser_env(request):
@@ -15,16 +22,12 @@ def browser_env(request):
     request.cls.driver_path = Path(os.getcwd()) / ('geckodriver' + ('.exe' if 'win' in sys.platform else ''))
     request.cls.clickable_timeout = 5
     yield
-    try:
-        request.cls.driver.quit()
-        print("Browser has been closed (with 'quit()').")
-    except:
-        pass
+    exit_browser(request.cls)
 
 
 @pytest.fixture(scope='function')
 def browser_run(request):
-    print(f'Setup driver...\n'
+    print(f'\nSetup driver...\n'
           f'Path to driver: {request.cls.driver_path}')
     request.cls.driver = webdriver.Firefox(executable_path=str(request.cls.driver_path))
     request.cls.action = webdriver.ActionChains(request.cls.driver)
@@ -35,15 +38,22 @@ def browser_run(request):
     except:
         raise AssertionError("Problems with driver.get(...)")
     yield
-    try:
-        request.cls.driver.quit()
-        print("Browser has been closed (with 'quit()').")
-    except:
-        raise RuntimeError("Something went wrong when closing the browser!")
+    exit_browser(request.cls, original=True)
 
 
 @pytest.mark.usefixtures('browser_env', 'browser_run')
 class Test_Site_with_Clothes:
+
+    def wait_n_click_obj_xpath(self, obj_xpath, wait=True, wait_time=None, click=True):
+        if wait:
+            driver_wait(self.driver, wait_time if wait_time else self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, obj_xpath)))
+        if click:
+            try:
+                self.driver.find_element_by_xpath(obj_xpath).click()
+            except NoSuchElementException:
+                raise  NoSuchElementException(f"Object {obj_xpath} not found.")
+            except:
+                raise RuntimeError("Something went wrong.")
 
     def test_Add_to_Cart(self):
         item_name = 'Blouse'
@@ -76,21 +86,16 @@ class Test_Site_with_Clothes:
         self.action.move_to_element(self.driver.find_element_by_class_name('right-block')).perform()
 
         add_to_cart_button_xpath = "//div[@class='button-container']/a[@title='Add to cart']"
-        driver_wait(self.driver, self.clickable_timeout).until(
-            EC.element_to_be_clickable((By.XPATH, add_to_cart_button_xpath)))
-        self.driver.find_element_by_xpath(add_to_cart_button_xpath).click()
+        self.wait_n_click_obj_xpath(add_to_cart_button_xpath)
 
         continue_shopping_button = "//div[@class='layer_cart_cart col-xs-12 col-md-6']/div[@class='button-container']/span[@title='Continue shopping']"
-        driver_wait(self.driver, self.clickable_timeout).until(
-            EC.element_to_be_clickable((By.XPATH, continue_shopping_button)))
-        self.driver.find_element_by_xpath(continue_shopping_button).click()
+        self.wait_n_click_obj_xpath(continue_shopping_button)
 
         #  CART CHECKING
         self.action.move_to_element(self.driver.find_element_by_xpath("//div[@class='shopping_cart']/a[1]")).perform()
 
         checkout_button = "//p[@class='cart-buttons']/a[1]/span[1]"
-        driver_wait(self.driver, self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, checkout_button)))
-        self.driver.find_element_by_xpath(checkout_button).click()
+        self.wait_n_click_obj_xpath(checkout_button)
 
         try:
             """
@@ -101,11 +106,9 @@ class Test_Site_with_Clothes:
             """
             self.driver.find_element_by_xpath(
                 "//div[@id='order-detail-content']/table[@id='cart_summary']/tbody/tr[@id='product_2_7_0_0']")
-            print(f'{item_name} has been added to cart.\n'
-                  f'TEST PASSED')
+            print(f'{item_name} has been added to cart.')
         except NoSuchElementException:
-            print("Cart is empty.")
-            raise AssertionError("FAILED")
+            raise AssertionError("Cart is empty.")
 
     def test_Check_Specials(self):
         transition_sequence = ['Women', 'Specials']
@@ -123,8 +126,7 @@ class Test_Site_with_Clothes:
         number_of_products = len(self.driver.find_elements_by_xpath(products_xpath))
         try:
             products_with_sale = [self.driver.find_element_by_xpath(f"{products_xpath}[{i+1}]/div[@class='product-container']/div[@class='right-block']/div[@class='content_price']/span[@class='price-percent-reduction']") for i in range(number_of_products)]
-            print("All products display with a discount.\n"
-                  "TEST PASSED")
+            print("All products display with a discount.")
         except NoSuchElementException:
             raise AssertionError(f"Something went wrong. Check {'/'.join(transition_sequence)} on web-site.\n"
                                  f"*(Maybe one or more products are displayed without a discount.)")
@@ -156,17 +158,16 @@ class Test_Site_with_Clothes:
                 self.action.move_to_element(product).perform()
 
             add_to_compare_button_xpath = f"{products_xpath}[{pid+1}]/div[@class='product-container']/div[@class='functional-buttons clearfix']/div[@class='compare']/a[1]"
-            driver_wait(self.driver, self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, add_to_compare_button_xpath)))
-            self.driver.find_element_by_xpath(add_to_compare_button_xpath).click()
+            self.wait_n_click_obj_xpath(add_to_compare_button_xpath)
 
             try:
                 overlay_cross_xpath = "//div[@class='fancybox-overlay fancybox-overlay-fixed']/div[@class='fancybox-wrap fancybox-desktop fancybox-type-html fancybox-opened']/div[@class='fancybox-skin']/a[@title='Close']"
-                driver_wait(self.driver, self.clickable_timeout).until(EC.element_to_be_clickable((By.XPATH, overlay_cross_xpath)))
+                self.wait_n_click_obj_xpath(overlay_cross_xpath, click=False)
                 print("Overlay is displayed.")
                 assert str(max_products_to_compare) in self.driver.find_element_by_class_name("fancybox-error").text, "Number of products in compare and number of products in error message don't match."
                 assert str(pid) in self.driver.find_element_by_class_name("fancybox-error").text, "Something went wrong with overlay calling. Check max number of products to compare."
                 print("Overlay massage is correct.")
-                self.driver.find_element_by_xpath(overlay_cross_xpath).click()
+                self.wait_n_click_obj_xpath(overlay_cross_xpath, wait=False)
                 break
             except TimeoutException:
                 product_img_src = self.driver.find_element_by_xpath(
@@ -219,6 +220,5 @@ class Test_Site_with_Clothes:
             if property not in compare_product_properties:
                 raise AssertionError("Expected and current products do not match.")
 
-        print("Product comparison works correctly. \n"
-              "TEST PASSED")
+        print("Product comparison works correctly.")
 

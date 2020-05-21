@@ -3,16 +3,9 @@ import sys
 from pathlib import Path
 from selenium import webdriver
 import pytest
+from utils import exit_browser
+from Pages.MainPage import MainPage
 
-from pages import MainPage
-
-def exit_browser(obj, original = False):
-    try:
-        obj.driver.quit()
-    except:
-        if original:
-            raise RuntimeError("Something went wrong when closing the browser!")
-        pass
 
 @pytest.fixture(scope='class')
 def browser_env(request):

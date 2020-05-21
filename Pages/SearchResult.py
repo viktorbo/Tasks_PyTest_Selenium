@@ -1,9 +1,11 @@
+import allure
 from selenium.common.exceptions import NoSuchElementException
 
 from Pages.Cart import Cart
 from utils import wait_n_click, BaseClass
 
 
+@allure.description("Страница поиска")
 class SearchResult(BaseClass):
 
     def __init__(self, driver, action, search_request=None):
@@ -11,6 +13,7 @@ class SearchResult(BaseClass):
         if search_request:
             self.search_request = search_request
 
+    @allure.step("Проверка найденных товаров (Блузки).")
     def check_search(self):
         try:
             self.driver.find_element_by_xpath("//ul[@class='product_list grid row']/li[1]")
@@ -19,6 +22,7 @@ class SearchResult(BaseClass):
         except NoSuchElementException:
             return False
 
+    @allure.step("Проверка наличия найденных товаров (Блузки).")
     def check_stock(self):
         try:
             self.driver.find_element_by_class_name('available-now')
@@ -27,6 +31,7 @@ class SearchResult(BaseClass):
         except NoSuchElementException:
             return False
 
+    @allure.step("Добавление в корзину.")
     def add_to_cart(self):
         self.action.move_to_element(self.driver.find_element_by_class_name('right-block')).perform()
 
@@ -42,6 +47,7 @@ class SearchResult(BaseClass):
         except:
             raise AssertionError("Problems with 'Continue shopping' button.")
 
+    @allure.step("Переход в корзину.")
     def go_to_cart(self):
         self.action.move_to_element(self.driver.find_element_by_xpath("//div[@class='shopping_cart']/a[1]")).perform()
 

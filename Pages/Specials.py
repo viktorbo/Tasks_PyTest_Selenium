@@ -1,9 +1,12 @@
+import allure
 from selenium.common.exceptions import NoSuchElementException
 
 from utils import BaseClass
 
 
+@allure.description("Страница Specials")
 class Specials(BaseClass):
+    @allure.step("Проверка скидок в Specials.")
     def check_discounts(self):
         products_xpath = "//ul[@class='product_list grid row']/li"
         number_of_products = len(self.driver.find_elements_by_xpath(products_xpath))

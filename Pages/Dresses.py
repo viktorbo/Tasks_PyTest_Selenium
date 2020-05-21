@@ -1,3 +1,4 @@
+import allure
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,10 +8,12 @@ from Pages.Compare import Compare
 from utils import wait_n_click, BaseClass
 
 
+@allure.description("Сраница Dresses")
 class Dresses(BaseClass):
     max_products_to_compare = 3
     product_properties = []
 
+    @allure.step("Добавление товара к сравнению.")
     def add_to_compare(self, obj, obj_xpath):
         try:
             self.action.move_to_element(obj).perform()
@@ -20,6 +23,7 @@ class Dresses(BaseClass):
 
         wait_n_click(self, obj_xpath)
 
+    @allure.step("Проверка оверлея при привышении количества товаров для сравнения.")
     def check_compare_overlay(self, pid, overlay_cross_xpath):
         wait_n_click(self, overlay_cross_xpath, click=False)
         print("Overlay is displayed.")
@@ -30,6 +34,7 @@ class Dresses(BaseClass):
         print("Overlay massage is correct.")
         wait_n_click(self, overlay_cross_xpath, wait=False)
 
+    @allure.step("Добавление максимального числа возможных товаров к сравнению.")
     def add_products_to_compare(self):
         products_xpath = "//ul[@class='product_list grid row']/li"
         try:
@@ -56,6 +61,7 @@ class Dresses(BaseClass):
             except:
                 raise AssertionError("Something went wrong in overlay calling.")
 
+    @allure.step("Переход к сравнению.")
     def go_to_compare(self):
         try:
             compare_button_xpath = "//button[@class='btn btn-default button button-medium bt_compare bt_compare']/span[1]"

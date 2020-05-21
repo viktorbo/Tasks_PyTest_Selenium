@@ -1,10 +1,13 @@
 import os
 import sys
 from pathlib import Path
-from selenium import webdriver
+
+import allure
 import pytest
-from utils import exit_browser
+from selenium import webdriver
+
 from Pages.MainPage import MainPage
+from utils import exit_browser
 
 
 @pytest.fixture(scope='class')
@@ -32,9 +35,11 @@ def browser_run(request):
     exit_browser(request.cls, original=True)
 
 
+@allure.suite("Тестирование практического сайта с одеждой.")
 @pytest.mark.usefixtures('browser_env', 'browser_run')
 class Test_Site_with_Clothes:
 
+    @allure.description("Проверка добавления товара в корзину.")
     def test_Add_to_Cart(self):
         item_name = 'Blouse'
 
@@ -48,9 +53,8 @@ class Test_Site_with_Clothes:
 
         assert cart.check_product_in_cart(item_name), "Cart is empty."
 
+    @allure.description("Проверка отображения скидок в Women/Specials.")
     def test_Check_Specials(self):
-
-
         main_page = MainPage(self.driver, self.action)
 
         specials = main_page.go_to_women().go_to_specials()
@@ -58,8 +62,8 @@ class Test_Site_with_Clothes:
         assert specials.check_discounts(), "Something went wrong. Check 'Specials' on web-site.\n" \
                                            "*(Maybe one or more products are displayed without a discount.)"
 
+    @allure.description("Проверка функции сравнения товаров.")
     def test_Products_Comparison(self):
-
         main_page = MainPage(self.driver, self.action)
 
         dresses = main_page.go_to_dresses()
@@ -70,5 +74,5 @@ class Test_Site_with_Clothes:
         products_before_remove = compare.check_products()
         compare.remove_product()
         products_after_remove = compare.check_products()
-        assert len(products_before_remove)-len(products_after_remove) == 1, "Problems with COMPARE function."
+        assert len(products_before_remove) - len(products_after_remove) == 1, "Problems with COMPARE function."
         print("Product comparison works correctly.")

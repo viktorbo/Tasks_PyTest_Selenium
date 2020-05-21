@@ -1,12 +1,16 @@
+import allure
+
 from utils import wait_n_click, BaseClass
 
 
+@allure.description("Страница сравнения товаров.")
 class Compare(BaseClass):
     def __init__(self, driver, action, product_properties=None):
         super().__init__(driver, action)
         if product_properties:
             self.product_properties = product_properties
 
+    @allure.step("Проверка текущих товаров в сравнении.")
     def check_products(self):
         assert hasattr(self, 'product_properties'), "Error in Compare.check_products."
         compare_product_properties = []
@@ -25,6 +29,7 @@ class Compare(BaseClass):
                 raise AssertionError("Added and compared products do not match.")
         return compare_product_properties
 
+    @allure.step("Удаление одного из продуктов в сравнении.")
     def remove_product(self):
         assert hasattr(self,
                        'number_of_products_in_compare_with_notprod_clmn') and self.number_of_products_in_compare_with_notprod_clmn != 0, "Empty compare list."

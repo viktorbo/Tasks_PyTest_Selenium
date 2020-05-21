@@ -1,9 +1,11 @@
+import allure
 from selenium.common.exceptions import NoSuchElementException
 
 from utils import BaseClass
 
-
+@allure.description("Страница КОРЗИНА")
 class Cart(BaseClass):
+    @allure.step("Проверка наличия блузки в корзине.")
     def check_product_in_cart(self, item_name):
         try:
             """
